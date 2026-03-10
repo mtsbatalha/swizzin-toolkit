@@ -46,8 +46,12 @@ source "${TOOLKIT_ROOT}/lib/core/swizzin.sh"
 source "${TOOLKIT_ROOT}/lib/core/utils.sh"
 
 # ─── Optionally load swizzin functions ───────────────────────────────────────
+# After loading, re-source colors.sh to ensure our echo_* functions take
+# precedence over any swizzin globals that may redefine them.
 
 load_swizzin_functions 2>/dev/null || true
+unset _TOOLKIT_COLORS_LOADED
+source "${TOOLKIT_ROOT}/lib/core/colors.sh"
 
 # ─── Load modules ────────────────────────────────────────────────────────────
 
