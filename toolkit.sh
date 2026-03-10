@@ -24,7 +24,9 @@ set -euo pipefail
 
 # ─── Resolve toolkit root ────────────────────────────────────────────────────
 
-TOOLKIT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+_self="$(readlink -f "${BASH_SOURCE[0]}" 2>/dev/null || realpath "${BASH_SOURCE[0]}" 2>/dev/null || echo "${BASH_SOURCE[0]}")"
+TOOLKIT_ROOT="$(cd "$(dirname "$_self")" && pwd)"
+unset _self
 export TOOLKIT_ROOT
 
 # ─── Load configuration ──────────────────────────────────────────────────────
