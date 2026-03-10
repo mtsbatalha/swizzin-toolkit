@@ -47,7 +47,7 @@ _get_swizzin_users() {
 # Get list of regular users from /etc/passwd (fallback for non-swizzin systems)
 _get_passwd_users() {
     getent passwd 2>/dev/null \
-        | awk -F: '$3 >= 1000 && $3 < 65534 && ($7 == "/bin/bash" || $7 == "/usr/bin/bash") { print $1 }'
+        | awk -F: '$3 >= 1000 && $3 < 65534 && $7 !~ /nologin|false/ { print $1 }'
 }
 
 # Returns the list of users relevant to the toolkit

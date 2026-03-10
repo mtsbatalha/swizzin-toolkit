@@ -19,8 +19,9 @@ tune_qbittorrent() {
     local tuned=0
 
     for user in "${users[@]}"; do
-        local config="/home/${user}/.config/qBittorrent/qBittorrent.conf"
-        [[ -f "$config" ]] || continue
+        local config
+        config=$(_find_qbt_config "$user") || true
+        [[ -n "$config" && -f "$config" ]] || continue
         echo_progress_start "Tuning qBittorrent for user: ${user}..."
         tune_qbittorrent_user "$user" "$config"
         echo_progress_done
@@ -28,11 +29,32 @@ tune_qbittorrent() {
     done
 
     if [[ $tuned -eq 0 ]]; then
-        echo_warn "No qBittorrent config files found for any user"
+        echo_warn "No qBittorrent config files found for any user (searched ~/.config/qBittorrent/, ~/.config/qbittorrent/, ~/.local/share/qBittorrent/)"
         return 0
     fi
 
     echo_success "qBittorrent tuned for ${tuned} user(s)"
+}
+
+# Locate qBittorrent config for a given user, trying common paths.
+_find_qbt_config() {
+    local user="$1"
+    local home="/home/${user}"
+    local candidates=(
+        "${home}/.config/qBittorrent/qBittorrent.conf"
+        "${home}/.config/qBittorrent/qBittorrent.ini"
+        "${home}/.config/qbittorrent/qBittorrent.conf"
+        "${home}/.config/qbittorrent/qBittorrent.ini"
+        "${home}/.local/share/qBittorrent/qBittorrent.conf"
+    )
+    for f in "${candidates[@]}"; do
+        [[ -f "$f" ]] && { echo "$f"; return 0; }
+    done
+    # Fallback: glob search under ~/.config
+    local found
+    found=$(find "${home}/.config" -maxdepth 3 -iname "qbittorrent.conf" -o -iname "qbittorrent.ini" 2>/dev/null | head -1)
+    [[ -n "$found" ]] && { echo "$found"; return 0; }
+    return 1
 }
 
 tune_qbittorrent_user() {
