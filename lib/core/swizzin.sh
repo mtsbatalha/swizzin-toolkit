@@ -14,15 +14,19 @@ is_swizzin_installed() {
 }
 
 # Attempt to source swizzin's function library (non-fatal)
+# Swizzin scripts are not written with set -u in mind, so we temporarily
+# disable nounset before sourcing them to prevent "unbound variable" errors.
 load_swizzin_functions() {
     if is_swizzin_installed; then
+        set +u
         # shellcheck disable=SC1090
         source "${SWIZZIN_GLOBALS}" 2>/dev/null || true
         # Source additional function libraries if present
+        # Only source 'users' — we skip 'color_echo' since swizzin's version
+        # uses unguarded $1 and conflicts with set -u in our environment.
         local func_dir="/etc/swizzin/sources/functions"
-        for f in users color_echo; do
-            [[ -f "${func_dir}/${f}" ]] && source "${func_dir}/${f}" 2>/dev/null || true
-        done
+        [[ -f "${func_dir}/users" ]] && source "${func_dir}/users" 2>/dev/null || true
+        set -u
     fi
 }
 
