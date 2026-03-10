@@ -33,15 +33,35 @@ load_swizzin_functions() {
 # ─── User enumeration ────────────────────────────────────────────────────────
 
 # Get list of swizzin users via /root/*.info files (swizzin canonical method)
+# NOTE: bash globs do not match dotfiles, so .master.info is handled explicitly.
 _get_swizzin_users() {
     local users=()
+    local seen=()
+    local info_file username
+
+    # Explicit check for the master user (stored in the hidden .master.info)
+    if [[ -f "/root/.master.info" ]]; then
+        username=$(cut -d: -f1 < "/root/.master.info" 2>/dev/null)
+        if [[ -n "$username" ]]; then
+            users+=("$username")
+            seen+=("$username")
+        fi
+    fi
+
+    # Any additional non-hidden *.info files (extra swizzin users)
     for info_file in /root/*.info; do
         [[ -f "$info_file" ]] || continue
-        local username
         username=$(cut -d: -f1 < "$info_file" 2>/dev/null)
-        [[ -n "$username" ]] && users+=("$username")
+        [[ -z "$username" ]] && continue
+        # Skip duplicates
+        local dup=false
+        local s; for s in "${seen[@]:-}"; do [[ "$s" == "$username" ]] && { dup=true; break; }; done
+        $dup && continue
+        users+=("$username")
+        seen+=("$username")
     done
-    printf '%s\n' "${users[@]}"
+
+    [[ ${#users[@]} -gt 0 ]] && printf '%s\n' "${users[@]}"
 }
 
 # Get list of regular users from /etc/passwd (fallback for non-swizzin systems)
@@ -51,13 +71,17 @@ _get_passwd_users() {
 }
 
 # Returns the list of users relevant to the toolkit
-# Uses swizzin method if available, otherwise falls back to passwd
+# Uses swizzin method if available, otherwise falls back to passwd.
+# Always falls back to passwd if swizzin method returns nothing.
 get_all_users() {
+    local result
     if is_swizzin_installed && [[ -f "/root/.master.info" ]]; then
-        _get_swizzin_users
-    else
-        _get_passwd_users
+        result="$(_get_swizzin_users)"
     fi
+    if [[ -z "${result:-}" ]]; then
+        result="$(_get_passwd_users)"
+    fi
+    [[ -n "$result" ]] && printf '%s\n' "$result"
 }
 
 # Returns the master/primary user on a swizzin box
