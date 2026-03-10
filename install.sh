@@ -35,7 +35,11 @@ echo
 
 echo "→ Installing to ${INSTALL_DIR}..."
 
-if [[ "$(realpath "$SCRIPT_DIR")" == "$(realpath "$INSTALL_DIR" 2>/dev/null || echo "$INSTALL_DIR")" ]]; then
+_resolve() { realpath "$1" 2>/dev/null || readlink -f "$1" 2>/dev/null || echo "$1"; }
+SCRIPT_DIR_REAL="$(_resolve "$SCRIPT_DIR")"
+INSTALL_DIR_REAL="$(_resolve "$INSTALL_DIR")"
+
+if [[ "$SCRIPT_DIR_REAL" == "$INSTALL_DIR_REAL" ]]; then
     echo "  Already running from ${INSTALL_DIR} — skipping copy."
 else
     if [[ -d "$INSTALL_DIR" ]]; then
