@@ -1,0 +1,14 @@
+# Editor
+.vscode/
+*.swp
+*~
+
+# Claude Code settings (local only)
+.claude/
+
+# Test artifacts
+/tmp/
+*.bak.*
+
+# Log files
+*.log
