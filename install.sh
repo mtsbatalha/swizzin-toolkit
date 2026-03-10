@@ -35,14 +35,16 @@ echo
 
 echo "→ Installing to ${INSTALL_DIR}..."
 
-if [[ -d "$INSTALL_DIR" ]]; then
-    echo "  Updating existing installation..."
-    # Backup existing install
-    cp -r "$INSTALL_DIR" "${INSTALL_DIR}.bak.$(date +%Y%m%d_%H%M%S)" 2>/dev/null || true
+if [[ "$(realpath "$SCRIPT_DIR")" == "$(realpath "$INSTALL_DIR" 2>/dev/null || echo "$INSTALL_DIR")" ]]; then
+    echo "  Already running from ${INSTALL_DIR} — skipping copy."
+else
+    if [[ -d "$INSTALL_DIR" ]]; then
+        echo "  Updating existing installation..."
+        cp -r "$INSTALL_DIR" "${INSTALL_DIR}.bak.$(date +%Y%m%d_%H%M%S)" 2>/dev/null || true
+    fi
+    mkdir -p "$INSTALL_DIR"
+    cp -r "${SCRIPT_DIR}/." "${INSTALL_DIR}/"
 fi
-
-mkdir -p "$INSTALL_DIR"
-cp -r "${SCRIPT_DIR}/." "${INSTALL_DIR}/"
 
 # ─── Step 2: Fix permissions ─────────────────────────────────────────────────
 
